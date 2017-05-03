@@ -1458,7 +1458,9 @@ PROCEDURE_SECTION
 	if ( last_phase() )
 	{
 		int refyear = nyr-1;
-		calc_spr_reference_points2(refyear, spr_fleet);
+		int refseason = 2; // I ADDED THIS AS A TEMP FIX, NEEDS TO BE CHANGED
+		// calc_spr_reference_points2(refyear, spr_fleet);
+		calc_spr_reference_points_old(refyear, refseason, spr_fleet);
 		if ( verbose == 1 ) cout << "Ok after calc_spr_reference_points ..." << endl;
 		calc_sdreport();
 		if ( verbose == 1 ) cout << "Ok after calc_sdreport ..." << endl;
@@ -1491,7 +1493,7 @@ FUNCTION calc_sdreport
 
 	sd_rbar = spr_rbar;
 	sd_fofl = spr_fofl;
-	sd_ofl = spr_cofl;
+	sd_ofl  = spr_cofl;
 
 	//reset_Z_to_M();
   // 	3darray M(1,nsex,syr,nyr,1,nclass);                    ///> Natural mortality
@@ -4042,7 +4044,9 @@ FUNCTION dvar_vector calc_ssb()
 	 * - calculate equibrium total mortality vector.
 	 * - calculate growth/survival transition matrix.
 	 *
-	 * Got response from andre, “The convention is to fix F for all non-directed fisheries to a recent average and to solve for the F for the directed fishery so that you achieve B35%.” but I think he meant F35.
+	 * Got response from andre, “The convention is to fix F for all non-directed fisheries to a 
+	 * recent average and to solve for the F for the directed fishery so that you achieve B35%.” 
+	 * but I think he meant F35.
 	 *
 	 * Use bisection method to find SPR_target.
 	 *
@@ -4059,7 +4063,7 @@ FUNCTION void calc_spr_reference_points_old(const int iyr, const int iseason, co
 	// Average recruitment
 	spr_rbar = mean(recruits(1)(spr_syr,spr_nyr));
 
-	double _r = value(spr_rbar);
+	double _r   = value(spr_rbar);
 	dvector _rx = value(rec_sdd);
 	d3_array _M(1,nsex,1,nclass,1,nclass);
 	_M.initialize();
@@ -4073,8 +4077,8 @@ FUNCTION void calc_spr_reference_points_old(const int iyr, const int iseason, co
 		{
 			_M(h)(l,l) = value(M(h)(iyr)(l));
 		}
-		//todo fix me.
-		_N(h) = value(d4_N(1)(iyr)(season_ssb));
+		//todo fix me, because??? only one sex??.
+		_N(h)  = value(d4_N(h)(iyr)(season_ssb));
 		_wa(h) = elem_prod(mean_wt(h)(syr), maturity(h));
 	}
 	
@@ -4120,11 +4124,11 @@ FUNCTION void calc_spr_reference_points_old(const int iyr, const int iseason, co
 	spr_ssbo = ptrSPR->get_ssbo();
 
 	// OFL Calculations
-	dvector ssb = value(calc_ssb());
+	dvector ssb    = value(calc_ssb());
 	double cuttoff = 0.1;
-	double limit = 0.25;
-	spr_fofl = ptrSPR->get_fofl(cuttoff,limit,ssb(nyr));
-	spr_cofl = ptrSPR->get_cofl(_N);
+	double limit   = 0.25;
+	spr_fofl       = ptrSPR->get_fofl(cuttoff,limit,ssb(nyr));
+	spr_cofl       = ptrSPR->get_cofl(_N);
 
 
 	/**
@@ -4415,7 +4419,7 @@ FUNCTION dvector calc_brute_equilibrium2(const dmatrix& SS, const double& rbar, 
 
 FUNCTION void calc_spr_reference_oldagain()
 	// Average recruitment
-	//spr_rbar = mean(value(recruits(spr_syr,spr_nyr)));
+	// spr_rbar = mean(value(recruits(spr_syr,spr_nyr)));
 	/*
 	double _r = spr_rbar;
 	dvector _rx = value(rec_sdd);
@@ -4713,14 +4717,18 @@ FUNCTION dvar_vector project_biomass(const int iproj, const int ifleet, const dv
 					}
 					if (j == nseason)
 					{
-						if (i != iproj)
+						if (i != iproj) // not last year
 						{ 
 							numbers_proj_gytl(ig)(i+1)(1) = x;
 						}
-					} else {
+					} 
+					else 
+					{
 						numbers_proj_gytl(ig)(i)(j+1) = x;
 					}
-				} else {
+				} 
+				else 
+				{
 					if ( o == 1 ) // newshell
 					{
 						x = numbers_proj_gytl(ig)(i)(j);
@@ -4794,7 +4802,6 @@ FUNCTION dvar_vector project_biomass(const int iproj, const int ifleet, const dv
 	}
 	return(ssb);
 
-
 FUNCTION void calc_spr_reference_points2(const int iyr, const int ifleet)
 	dvar4_array numbers_proj_gytl(1,n_grp,1,1,1,nseason,1,nclass);
 	dvariable Bmsy;
@@ -4806,9 +4813,24 @@ FUNCTION void calc_spr_reference_points2(const int iyr, const int ifleet)
 	double gamma = 1.0;
 
 	spr_rbar = mean(recruits(1)(spr_syr,spr_nyr));
-	Bmsy = mean(calc_ssb()(spr_syr,spr_nyr)); // Jies code: Bmsy = sum(MMB215(1,nyrs-1))/(nyrs-1);
+	// Tier dependent (3 and 4 here)
+	int tier = 3;
+	switch ( tier )
+  {
+		case 3:
+	    // spr_fspr = ptrSPR->get_fspr(ifleet,spr_target,_fhk,_sel,_ret,_dmr);
+	    // spr_bspr = ptrSPR->get_bspr();
+	    // spr_ssbo = ptrSPR->get_ssbo();
+	    // Fmsy = spr_fspr;
+	    Fmsy = gamma * M0;
+	    Bmsy = mean(calc_ssb()(spr_syr,spr_nyr)); // Jies code: Bmsy = sum(MMB215(1,nyrs-1))/(nyrs-1);
+			break;
+		case 4:
+	    Fmsy = gamma * M0;
+	    Bmsy = mean(calc_ssb()(spr_syr,spr_nyr)); // Jies code: Bmsy = sum(MMB215(1,nyrs-1))/(nyrs-1);
+			break;
+  }
 	spr_bspr = Bmsy;
-	Fmsy = gamma * M0;
 	FF = Fmsy;
 	Bproj = project_biomass(1, ifleet, log(FF), numbers_proj_gytl)(1);
 

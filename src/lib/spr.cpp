@@ -81,7 +81,7 @@ spr::spr(const double& _r,
 	dmatrix S(1,m_nclass,1,m_nclass);
 	S.initialize();
 
-	cout << "inside Constructor" << endl;
+	// cout << "inside Constructor" << endl;
 	
 	// get unfished mature male biomass per recruit.
 	m_ssb0 = 0.0;
@@ -101,7 +101,7 @@ spr::spr(const double& _r,
 		m_ssb0 += lam * (n+o) * m_wa(h);
 		
 	}
-	COUT(m_ssb0);
+	// COUT(m_ssb0);
 }
 
 spr::~spr()
@@ -264,7 +264,7 @@ double spr::get_fspr(const int& ifleet,
 		{
 			m_fspr = fc;
 			m_bspr = m_ssb;
-			cout << "SPR calculations have converged. :)" << endl;
+			// cout << "SPR calculations have converged. :)" << endl;
 			break;
 		}
 
@@ -275,7 +275,7 @@ double spr::get_fspr(const int& ifleet,
 		} else {
 			fb = fc;
 		}
-		cout<<"iter = "<<iter<<"\tfc = "<<fc<<"\t(spr-spr_target)="<<m_spr<<" - "<<spr_target<<" "<<t1<<endl;
+		// cout<<"iter = "<<iter<<"\tfc = "<<fc<<"\t(spr-spr_target)="<<m_spr<<" - "<<spr_target<<" "<<t1<<endl;
 		fc = 0.5*(fa+fb);
 	} while (iter++ < MAXIT);
 
@@ -305,8 +305,6 @@ double spr::get_fofl(const double& alpha, const double& limit, const double& ssb
 	}
 	return m_fofl;
 }
-
-
 /**
  * @brief Calculate OFL
  * @details Calculates the OFL based on harvest control rule and estimate of Fspr%
@@ -316,7 +314,7 @@ double spr::get_fofl(const double& alpha, const double& limit, const double& ssb
 **/
 double spr::get_cofl(const dmatrix& N)
 {
-	cout << "Get OFL" << endl;
+	// cout << "Get OFL" << endl;
 	double ctmp = 0;
 	// double dmr  = 0.8;
 	double ftmp;
