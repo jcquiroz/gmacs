@@ -64,3 +64,6 @@ gradient.*
 *_in.dat
 variance
 sims
+
+# Supplementary Documents
+examples/bbrkc_2017/comments
