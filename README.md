@@ -1,4 +1,4 @@
-# Gmacs
+# Gmacs - jcq
 
 A generalized size-structured stock assessment modelling framework. Gmacs includes:
 
